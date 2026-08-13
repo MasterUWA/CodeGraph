@@ -1,0 +1,29 @@
+# Composer
+vendor/
+composer.lock
+
+# Uploads (keep structure, ignore PHP files)
+uploads/*.php
+!uploads/index.html
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+error_log
+
+# Environment
+.env
+.env.local
+
+# Temp files
+tmp/
+temp/
+cache/
