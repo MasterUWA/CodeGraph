@@ -1,0 +1,146 @@
+<?php
+header('Content-Type: application/json');
+
+session_start();
+
+// Check if user is logged in
+if (!isset($_SESSION['user_id'])) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'error' => 'Unauthorized']);
+    exit;
+}
+
+require_once __DIR__ . '/../vendor/autoload.php';
+
+$user_id = $_SESSION['user_id'];
+$format = $_GET['format'] ?? 'json';
+$analysis_id = intval($_GET['id'] ?? 0);
+
+try {
+    require_once __DIR__ . '/../config/database.php';
+    $db = Database::getInstance()->getConnection();
+    
+    // Get analysis
+    $stmt = $db->prepare("
+        SELECT a.*, u.username
+        FROM analyses a
+        JOIN users u ON a.user_id = u.id
+        WHERE a.id = ? AND a.user_id = ?
+    ");
+    $stmt->execute([$analysis_id, $user_id]);
+    $analysis = $stmt->fetch();
+    
+    if (!$analysis) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'error' => 'Analysis not found']);
+        exit;
+    }
+    
+    // Get vulnerabilities
+    $stmt = $db->prepare("
+        SELECT id, type, severity, description, created_at
+        FROM vulnerabilities
+        WHERE analysis_id = ?
+    ");
+    $stmt->execute([$analysis_id]);
+    $vulnerabilities = $stmt->fetchAll();
+    
+    $graph = json_decode($analysis['graph_json'], true) ?? ['nodes' => [], 'edges' => []];
+    
+    if ($format === 'json') {
+        // JSON Export
+        header('Content-Disposition: attachment; filename="analysis_' . $analysis_id . '.json"');
+        echo json_encode([
+            'metadata' => [
+                'analysis_id' => $analysis['id'],
+                'analyst' => $analysis['username'],
+                'created_at' => $analysis['created_at'],
+                'vulnerability_detected' => (bool)$analysis['vulnerability_detected']
+            ],
+            'statistics' => [
+                'nodes' => $analysis['node_count'],
+                'edges' => $analysis['edge_count']
+            ],
+            'graph' => $graph,
+            'vulnerabilities' => $vulnerabilities
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        
+    } elseif ($format === 'csv') {
+        // CSV Export
+        header('Content-Disposition: attachment; filename="vulnerabilities_' . $analysis_id . '.csv"');
+        header('Content-Type: text/csv');
+        
+        $csv = fopen('php://output', 'w');
+        
+        // Headers
+        fputcsv($csv, ['ID', 'Type', 'Severity', 'Description', 'Detected At']);
+        
+        // Data
+        foreach ($vulnerabilities as $vuln) {
+            fputcsv($csv, [
+                $vuln['id'],
+                $vuln['type'],
+                $vuln['severity'],
+                $vuln['description'],
+                $vuln['created_at']
+            ]);
+        }
+        
+        fclose($csv);
+        
+    } elseif ($format === 'text') {
+        // Plain Text Report
+        header('Content-Disposition: attachment; filename="analysis_' . $analysis_id . '.txt"');
+        header('Content-Type: text/plain');
+        
+        echo "════════════════════════════════════════════════════════════════\n";
+        echo "  CODEGRAPH - PHP SECURITY ANALYSIS REPORT\n";
+        echo "════════════════════════════════════════════════════════════════\n\n";
+        
+        echo "ANALYSIS METADATA\n";
+        echo "─────────────────────────────────────────────────────────────────\n";
+        echo "Analysis ID:      " . $analysis['id'] . "\n";
+        echo "Analyst:          " . $analysis['username'] . "\n";
+        echo "Date:             " . $analysis['created_at'] . "\n";
+        echo "Status:           " . ($analysis['vulnerability_detected'] ? 'VULNERABLE' : 'SAFE') . "\n\n";
+        
+        echo "CODE STATISTICS\n";
+        echo "─────────────────────────────────────────────────────────────────\n";
+        echo "Total Nodes:      " . $analysis['node_count'] . "\n";
+        echo "Total Edges:      " . $analysis['edge_count'] . "\n";
+        echo "Complexity:       " . number_format($analysis['node_count'] + $analysis['edge_count'], 2) . "\n\n";
+        
+        if (!empty($vulnerabilities)) {
+            echo "VULNERABILITIES FOUND\n";
+            echo "─────────────────────────────────────────────────────────────────\n";
+            echo sprintf("%-30s %-15s %s\n", "Type", "Severity", "Description");
+            echo "─────────────────────────────────────────────────────────────────\n";
+            
+            foreach ($vulnerabilities as $vuln) {
+                echo sprintf(
+                    "%-30s %-15s %s\n",
+                    substr($vuln['type'], 0, 30),
+                    $vuln['severity'],
+                    substr($vuln['description'], 0, 40)
+                );
+            }
+        } else {
+            echo "VULNERABILITIES FOUND\n";
+            echo "─────────────────────────────────────────────────────────────────\n";
+            echo "None\n";
+        }
+        
+        echo "\n════════════════════════════════════════════════════════════════\n";
+        echo "Generated by CodeGraph PHP Security Analysis Platform\n";
+        echo "════════════════════════════════════════════════════════════════\n";
+        
+    } else {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Invalid format']);
+    }
+    
+} catch (\Exception $e) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+}
+?>

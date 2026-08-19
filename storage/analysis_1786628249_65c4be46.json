@@ -1,0 +1,876 @@
+{
+    "filename": "ParserAttributesTest.php",
+    "code": "<?php\n\ndeclare(strict_types=1);\n\n/**\n * This file is part of PHP-CFG, a Control flow graph implementation for PHP\n *\n * @copyright 2015 Anthony Ferrara. All rights reserved\n * @license MIT See LICENSE at the root of the project for more info\n */\n\nnamespace PHPCfg;\n\nuse PhpParser\\ParserFactory;\nuse PHPUnit\\Framework\\Attributes\\CoversNothing;\nuse PHPUnit\\Framework\\TestCase;\nuse RuntimeException;\n\n#[CoversNothing]\nclass ParserAttributesTest extends TestCase\n{\n    public function testDefault()\n    {\n        $code = <<< EOF\n            <?php\n            function foo(\\$a) {\n                return \\$a;\n            }\n            EOF;\n\n        $expected = <<< EOF\n            Block#1\n                Stmt_Function\n                    name: foo\n                Terminal_Return\n\n            Function 'foo': mixed\n            Block#1\n                Expr_Param\n                    declaredType: mixed\n                    name: LITERAL('a')\n                    result: TEMP(#1 <VARIABLE(\\$a)>)\n                Terminal_Return\n                    expr: TEMP(#1 <VARIABLE(\\$a)>)\n            EOF;\n\n        $parser = new Parser((new ParserFactory())->createForNewestSupportedVersion(), null);\n        $traverser = new Traverser();\n        $traverser->addVisitor(new Visitor\\Simplifier());\n        $printer = new Printer\\Text();\n\n        try {\n            $script = $parser->parse($code, 'foo.php');\n            $traverser->traverse($script);\n            $result = $printer->printScript($script);\n        } catch (RuntimeException $e) {\n            $result = $e->getMessage();\n        }\n\n        $this->assertEquals(CodeTest::canonicalize($expected), CodeTest::canonicalize($result));\n    }\n\n    public function testAttributes()\n    {\n        $code = <<< EOF\n            <?php\n            function foo(\\$a) {\n                return \\$a;\n            }\n\n            #[Attr]\n            function foowithattribute(\\$a) {\n                return \\$a;\n            }\n            EOF;\n\n        $expected = <<<'EOF'\n            Block#1\n                Stmt_Function\n                    attribute['filename']: foo.php\n                    attribute['startLine']: 2\n                    attribute['startTokenPos']: 1\n                    attribute['startFilePos']: 6\n                    attribute['endLine']: 4\n                    attribute['endTokenPos']: 15\n                    attribute['endFilePos']: 40\n                    name: foo\n                Stmt_Function\n                    attribute['filename']: foo.php\n                    attribute['startLine']: 6\n                    attribute['startTokenPos']: 17\n                    attribute['startFilePos']: 43\n                    attribute['endLine']: 9\n                    attribute['endTokenPos']: 35\n                    attribute['endFilePos']: 98\n                    attrGroup[0]['attribute']['filename']: foo.php\n                    attrGroup[0]['attribute']['startLine']: 6\n                    attrGroup[0]['attribute']['startTokenPos']: 17\n                    attrGroup[0]['attribute']['startFilePos']: 43\n                    attrGroup[0]['attribute']['endLine']: 6\n                    attrGroup[0]['attribute']['endTokenPos']: 19\n                    attrGroup[0]['attribute']['endFilePos']: 49\n                    attrGroup[0][0]['attribute']['filename']: foo.php\n                    attrGroup[0][0]['attribute']['startLine']: 6\n                    attrGroup[0][0]['attribute']['startTokenPos']: 18\n                    attrGroup[0][0]['attribute']['startFilePos']: 45\n                    attrGroup[0][0]['attribute']['endLine']: 6\n                    attrGroup[0][0]['attribute']['endTokenPos']: 18\n                    attrGroup[0][0]['attribute']['endFilePos']: 48\n                    attrGroup[0][0]['name']: LITERAL('Attr')\n                    name: foowithattribute\n                Terminal_Return\n\n            Function 'foo': mixed\n            Block#1\n                Expr_Param\n                    attribute['filename']: foo.php\n                    attribute['startLine']: 2\n                    attribute['startTokenPos']: 5\n                    attribute['startFilePos']: 19\n                    attribute['endLine']: 2\n                    attribute['endTokenPos']: 5\n                    attribute['endFilePos']: 20\n                    declaredType: mixed\n                    name: LITERAL('a')\n                    result: TEMP(#1 <VARIABLE($a)>)\n                Terminal_Return\n                    attribute['filename']: foo.php\n                    attribute['startLine']: 3\n                    attribute['startTokenPos']: 10\n                    attribute['startFilePos']: 29\n                    attribute['endLine']: 3\n                    attribute['endTokenPos']: 13\n                    attribute['endFilePos']: 38\n                    expr: TEMP(#1 <VARIABLE($a)>)\n\n            Function 'foowithattribute': mixed\n            Block#1\n                Expr_Param\n                    attribute['filename']: foo.php\n                    attribute['startLine']: 7\n                    attribute['startTokenPos']: 25\n                    attribute['startFilePos']: 77\n                    attribute['endLine']: 7\n                    attribute['endTokenPos']: 25\n                    attribute['endFilePos']: 78\n                    declaredType: mixed\n                    name: LITERAL('a')\n                    result: TEMP(#1 <VARIABLE($a)>)\n                Terminal_Return\n                    attribute['filename']: foo.php\n                    attribute['startLine']: 8\n                    attribute['startTokenPos']: 30\n                    attribute['startFilePos']: 87\n                    attribute['endLine']: 8\n                    attribute['endTokenPos']: 33\n                    attribute['endFilePos']: 96\n                    expr: TEMP(#1 <VARIABLE($a)>)\n            EOF;\n\n        $parser = new Parser((new ParserFactory())->createForNewestSupportedVersion(), null);\n        $traverser = new Traverser();\n        $traverser->addVisitor(new Visitor\\Simplifier());\n        $printer = new Printer\\Text(Printer\\Printer::MODE_RENDER_ATTRIBUTES);\n\n        try {\n            $script = $parser->parse($code, 'foo.php');\n            $traverser->traverse($script);\n            $result = $printer->printScript($script);\n        } catch (RuntimeException $e) {\n            $result = $e->getMessage();\n        }\n\n        $this->assertEquals(CodeTest::canonicalize($expected), CodeTest::canonicalize($result));\n    }\n}",
+    "graph": {
+        "nodes": [
+            {
+                "id": "n1",
+                "type": "AST_ROOT",
+                "layer": "root",
+                "code": "",
+                "line": 0,
+                "color": "#ef4444",
+                "size": 12,
+                "degree": 56
+            },
+            {
+                "id": "n2",
+                "type": "Assign",
+                "layer": "ast",
+                "code": "Assign",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n3",
+                "type": "Assign",
+                "layer": "ast",
+                "code": "Assign",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n4",
+                "type": "Assign",
+                "layer": "ast",
+                "code": "Assign",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n5",
+                "type": "Assign",
+                "layer": "ast",
+                "code": "Assign",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n6",
+                "type": "Assign",
+                "layer": "ast",
+                "code": "Assign",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n7",
+                "type": "Assign",
+                "layer": "ast",
+                "code": "Assign",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n8",
+                "type": "Assign",
+                "layer": "ast",
+                "code": "Assign",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n9",
+                "type": "Assign",
+                "layer": "ast",
+                "code": "Assign",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n10",
+                "type": "Assign",
+                "layer": "ast",
+                "code": "Assign",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n11",
+                "type": "Assign",
+                "layer": "ast",
+                "code": "Assign",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n12",
+                "type": "Assign",
+                "layer": "ast",
+                "code": "Assign",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n13",
+                "type": "Assign",
+                "layer": "ast",
+                "code": "Assign",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n14",
+                "type": "Assign",
+                "layer": "ast",
+                "code": "Assign",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n15",
+                "type": "Assign",
+                "layer": "ast",
+                "code": "Assign",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n16",
+                "type": "Assign",
+                "layer": "ast",
+                "code": "Assign",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n17",
+                "type": "Assign",
+                "layer": "ast",
+                "code": "Assign",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n18",
+                "type": "FuncCall",
+                "layer": "ast",
+                "code": "FuncCall",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n19",
+                "type": "FuncCall",
+                "layer": "ast",
+                "code": "FuncCall",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n20",
+                "type": "FuncCall",
+                "layer": "ast",
+                "code": "FuncCall",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n21",
+                "type": "FuncCall",
+                "layer": "ast",
+                "code": "FuncCall",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n22",
+                "type": "FuncCall",
+                "layer": "ast",
+                "code": "FuncCall",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n23",
+                "type": "FuncCall",
+                "layer": "ast",
+                "code": "FuncCall",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n24",
+                "type": "FuncCall",
+                "layer": "ast",
+                "code": "FuncCall",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n25",
+                "type": "FuncCall",
+                "layer": "ast",
+                "code": "FuncCall",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n26",
+                "type": "FuncCall",
+                "layer": "ast",
+                "code": "FuncCall",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n27",
+                "type": "FuncCall",
+                "layer": "ast",
+                "code": "FuncCall",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n28",
+                "type": "FuncCall",
+                "layer": "ast",
+                "code": "FuncCall",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n29",
+                "type": "FuncCall",
+                "layer": "ast",
+                "code": "FuncCall",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n30",
+                "type": "FuncCall",
+                "layer": "ast",
+                "code": "FuncCall",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n31",
+                "type": "FuncCall",
+                "layer": "ast",
+                "code": "FuncCall",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n32",
+                "type": "FuncCall",
+                "layer": "ast",
+                "code": "FuncCall",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n33",
+                "type": "FuncCall",
+                "layer": "ast",
+                "code": "FuncCall",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n34",
+                "type": "FuncCall",
+                "layer": "ast",
+                "code": "FuncCall",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n35",
+                "type": "FuncCall",
+                "layer": "ast",
+                "code": "FuncCall",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n36",
+                "type": "FuncCall",
+                "layer": "ast",
+                "code": "FuncCall",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n37",
+                "type": "FuncCall",
+                "layer": "ast",
+                "code": "FuncCall",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n38",
+                "type": "FuncCall",
+                "layer": "ast",
+                "code": "FuncCall",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n39",
+                "type": "FuncCall",
+                "layer": "ast",
+                "code": "FuncCall",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n40",
+                "type": "FuncCall",
+                "layer": "ast",
+                "code": "FuncCall",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n41",
+                "type": "FuncCall",
+                "layer": "ast",
+                "code": "FuncCall",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n42",
+                "type": "FuncCall",
+                "layer": "ast",
+                "code": "FuncCall",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n43",
+                "type": "FuncCall",
+                "layer": "ast",
+                "code": "FuncCall",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n44",
+                "type": "FuncCall",
+                "layer": "ast",
+                "code": "FuncCall",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n45",
+                "type": "FuncCall",
+                "layer": "ast",
+                "code": "FuncCall",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n46",
+                "type": "FuncCall",
+                "layer": "ast",
+                "code": "FuncCall",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n47",
+                "type": "FuncCall",
+                "layer": "ast",
+                "code": "FuncCall",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n48",
+                "type": "FuncCall",
+                "layer": "ast",
+                "code": "FuncCall",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n49",
+                "type": "FuncCall",
+                "layer": "ast",
+                "code": "FuncCall",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n50",
+                "type": "FuncCall",
+                "layer": "ast",
+                "code": "FuncCall",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n51",
+                "type": "FuncCall",
+                "layer": "ast",
+                "code": "FuncCall",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n52",
+                "type": "FuncCall",
+                "layer": "ast",
+                "code": "FuncCall",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n53",
+                "type": "FuncCall",
+                "layer": "ast",
+                "code": "FuncCall",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n54",
+                "type": "FuncCall",
+                "layer": "ast",
+                "code": "FuncCall",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n55",
+                "type": "FuncCall",
+                "layer": "ast",
+                "code": "FuncCall",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n56",
+                "type": "FuncCall",
+                "layer": "ast",
+                "code": "FuncCall",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            },
+            {
+                "id": "n57",
+                "type": "FuncCall",
+                "layer": "ast",
+                "code": "FuncCall",
+                "line": 0,
+                "color": "#94a3b8",
+                "size": 6,
+                "degree": 1
+            }
+        ],
+        "edges": [
+            {
+                "source": "n1",
+                "target": "n2",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n3",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n4",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n5",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n6",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n7",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n8",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n9",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n10",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n11",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n12",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n13",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n14",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n15",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n16",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n17",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n18",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n19",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n20",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n21",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n22",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n23",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n24",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n25",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n26",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n27",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n28",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n29",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n30",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n31",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n32",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n33",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n34",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n35",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n36",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n37",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n38",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n39",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n40",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n41",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n42",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n43",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n44",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n45",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n46",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n47",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n48",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n49",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n50",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n51",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n52",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n53",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n54",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n55",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n56",
+                "label": "AST_CHILD"
+            },
+            {
+                "source": "n1",
+                "target": "n57",
+                "label": "AST_CHILD"
+            }
+        ],
+        "metadata": {
+            "node_count": 57,
+            "edge_count": 56,
+            "vulnerability_detected": false,
+            "tainted_variables": [],
+            "edge_types": {
+                "AST_CHILD": 56
+            },
+            "complexity": 0.98,
+            "graph_type": "Joint Program Graph",
+            "layers": [
+                "AST",
+                "DFG"
+            ]
+        }
+    },
+    "timestamp": 1786628249
+}

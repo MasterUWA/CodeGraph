@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeGraph - PHP Security Analysis Platform</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #1e40af;
+            --secondary: #8b5cf6;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --success: #10b981;
+            --dark-bg: #0f172a;
+            --darker-bg: #0a0e27;
+            --light-bg: #f8fafc;
+            --lighter-bg: #ffffff;
+            --card-bg: #1e293b;
+            --card-bg-light: #ffffff;
+            --border: #334155;
+            --border-light: #dbe6f3;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --text-light: #0f172a;
+            --text-muted-light: #475569;
+            --bg-gradient: linear-gradient(135deg, var(--dark-bg) 0%, var(--darker-bg) 100%);
+            --nav-bg: rgba(15, 23, 42, 0.95);
+        }
+
+        body[data-theme="light"] {
+            --card-bg: var(--card-bg-light);
+            --border: var(--border-light);
+            --text: var(--text-light);
+            --text-muted: var(--text-muted-light);
+            --bg-gradient: linear-gradient(135deg, var(--light-bg) 0%, #e8eef9 100%);
+            --nav-bg: rgba(255, 255, 255, 0.94);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+            transition: background 0.35s ease, color 0.25s ease;
+        }
+
+        /* Navigation */
+        nav {
+            background: var(--nav-bg);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            padding: 1rem 0;
+            transition: background 0.35s ease, border-color 0.25s ease;
+        }
+
+        nav .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .logo i {
+            font-size: 2rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+            list-style: none;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.3s;
+            font-weight: 500;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        .theme-toggle {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.45rem 0.9rem;
+            border-radius: 0.6rem;
+            cursor: pointer;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.25s;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .btn-auth {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+            white-space: nowrap;
+        }
+
+        .btn-auth:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Hero Section */
+        .hero {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 6rem 2rem;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 4rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 1rem 2.5rem;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+        }
+
+        /* Stats Section */
+        .stats {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 3rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto 4rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            text-align: center;
+        }
+
+        .stat {
+            flex: 1;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* Features Section */
+        .features {
+            max-width: 1200px;
+            margin: 4rem auto;
+            padding: 0 2rem;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 2rem;
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.1);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 0.75rem;
+            color: var(--primary);
+        }
+
+        .feature-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.75rem;
+            color: var(--text);
+        }
+
+        .feature-card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        /* How It Works */
+        .how-it-works {
+            max-width: 1200px;
+            margin: 4rem auto;
+            padding: 0 2rem;
+        }
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .step {
+            text-align: center;
+        }
+
+        .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .step h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .step p {
+            color: var(--text-muted);
+        }
+
+        /* Vulnerabilities Section */
+        .vulnerabilities {
+            max-width: 1200px;
+            margin: 4rem auto;
+            padding: 0 2rem;
+        }
+
+        .vuln-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .vuln-card {
+            background: var(--card-bg);
+            border-left: 4px solid var(--danger);
+            border-radius: 0.75rem;
+            padding: 2rem;
+        }
+
+        .vuln-card.warning {
+            border-left-color: var(--warning);
+        }
+
+        .vuln-card.info {
+            border-left-color: var(--secondary);
+        }
+
+        .vuln-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.25rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+
+        .vuln-badge.danger {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+
+        .vuln-badge.warning {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+        }
+
+        .vuln-badge.info {
+            background: rgba(139, 92, 246, 0.2);
+            color: var(--secondary);
+        }
+
+        .vuln-card h3 {
+            font-size: 1.125rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .vuln-card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid var(--border);
+            margin-top: 4rem;
+            padding: 3rem 2rem;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .footer-links a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(2, 8, 23, 0.72);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            z-index: 2000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-card {
+            width: min(680px, 100%);
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            box-shadow: 0 20px 60px rgba(2, 8, 23, 0.35);
+            overflow: hidden;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.15rem;
+        }
+
+        .modal-close {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+            width: 2rem;
+            height: 2rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+        }
+
+        .modal-body {
+            padding: 1.25rem;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            nav .container,
+            .hero,
+            .features,
+            .how-it-works,
+            .vulnerabilities,
+            footer {
+                padding-left: 1.25rem;
+                padding-right: 1.25rem;
+            }
+
+            .hero {
+                padding-top: 4.5rem;
+                padding-bottom: 4.5rem;
+            }
+
+            .nav-links {
+                gap: 0.8rem;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            nav .container {
+                justify-content: center;
+            }
+
+            .logo {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .nav-links {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .hero p {
+                font-size: 1rem;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn-primary,
+            .btn-auth,
+            .theme-toggle {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .stats {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                padding: 1.5rem 1rem;
+                gap: 1rem;
+            }
+
+            .features-grid,
+            .steps,
+            .vuln-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-body {
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero h1 {
+                font-size: 1.7rem;
+            }
+
+            .section-title {
+                font-size: 1.5rem;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="container">
+            <a href="index.html" class="logo">
+                <i class="fas fa-code-branch"></i>
+                <span>CodeGraph</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#vulnerabilities">Vulnerabilities</a></li>
+                <li><a href="#how">How It Works</a></li>
+                <li><a href="login.php" class="btn-auth btn-secondary">Sign In</a></li>
+                <li><a href="register.php" class="btn-auth">Register</a></li>
+                <li><button type="button" class="theme-toggle" id="themeToggle" aria-label="Toggle theme"><i class="fas fa-moon"></i><span>Theme</span></button></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <h1>Secure Your PHP Code</h1>
+        <p>CodeGraph analyzes your PHP code for security vulnerabilities using advanced program graph analysis. Detect SQL Injection, XSS, and other critical security issues before they reach production.</p>
+        
+        <div class="hero-buttons">
+            <a href="analyse.php" class="btn-primary">Launch Analyzer</a>
+            <a href="register.php" class="btn-primary" style="background: transparent; border: 2px solid var(--primary); color: var(--primary);">Sign Up</a>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-number">50+</div>
+                <div class="stat-label">Vulnerability Patterns</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">99%</div>
+                <div class="stat-label">Detection Accuracy</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">&lt;1s</div>
+                <div class="stat-label">Analysis Time</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">24/7</div>
+                <div class="stat-label">Always Available</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <h2 class="section-title">Powerful Features</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-project-diagram"></i>
+                </div>
+                <h3>Program Graph Analysis</h3>
+                <p>Advanced AST, CFG, and DFG analysis to trace data flow through your entire application.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-virus"></i>
+                </div>
+                <h3>Taint Tracking</h3>
+                <p>Automatically track tainted data from external sources to potential sinks.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h3>Detailed Reports</h3>
+                <p>Comprehensive analysis reports with visualization and recommendations.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-database"></i>
+                </div>
+                <h3>Analysis History</h3>
+                <p>Keep track of all your analyses with full search and filter capabilities.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-download"></i>
+                </div>
+                <h3>Export Results</h3>
+                <p>Export findings in JSON, CSV, and PDF formats for reporting.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-lock"></i>
+                </div>
+                <h3>Secure & Private</h3>
+                <p>Your code is processed securely and never stored permanently.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="how-it-works" id="how">
+        <h2 class="section-title">How It Works</h2>
+        <div class="steps">
+            <div class="step">
+                <div class="step-number">1</div>
+                <h3>Upload Code</h3>
+                <p>Paste or upload your PHP code</p>
+            </div>
+            <div class="step">
+                <div class="step-number">2</div>
+                <h3>Analyze</h3>
+                <p>CodeGraph builds program graphs</p>
+            </div>
+            <div class="step">
+                <div class="step-number">3</div>
+                <h3>Detect</h3>
+                <p>Identifies security vulnerabilities</p>
+            </div>
+            <div class="step">
+                <div class="step-number">4</div>
+                <h3>Review</h3>
+                <p>View detailed reports and fix issues</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Vulnerabilities Section -->
+    <section class="vulnerabilities" id="vulnerabilities">
+        <h2 class="section-title">Detectable Vulnerabilities</h2>
+        <div class="vuln-grid">
+            <div class="vuln-card">
+                <span class="vuln-badge danger">CRITICAL</span>
+                <h3>SQL Injection</h3>
+                <p>Detects unsanitized user input flowing into database queries.</p>
+            </div>
+            <div class="vuln-card warning">
+                <span class="vuln-badge warning">HIGH</span>
+                <h3>Cross-Site Scripting</h3>
+                <p>Identifies unescaped user input reflected in HTML output.</p>
+            </div>
+            <div class="vuln-card warning">
+                <span class="vuln-badge warning">HIGH</span>
+                <h3>Command Injection</h3>
+                <p>Finds vulnerabilities in system command execution.</p>
+            </div>
+            <div class="vuln-card info">
+                <span class="vuln-badge info">MEDIUM</span>
+                <h3>Information Disclosure</h3>
+                <p>Detects sensitive data exposure in error messages.</p>
+            </div>
+            <div class="vuln-card warning">
+                <span class="vuln-badge warning">HIGH</span>
+                <h3>Path Traversal</h3>
+                <p>Identifies directory traversal vulnerabilities.</p>
+            </div>
+            <div class="vuln-card info">
+                <span class="vuln-badge info">MEDIUM</span>
+                <h3>Insecure Deserialization</h3>
+                <p>Detects unsafe unserialize() operations.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2026 CodeGraph - PHP Security Analysis Platform. Built for Masters Research.</p>
+        <p class="footer-links" style="margin-top: 1rem; font-size: 0.9rem;">
+            <a href="http://localhost/php-graph-builder/public/#" data-modal="privacy">Privacy Policy</a> | 
+            <a href="http://localhost/php-graph-builder/public/#" data-modal="terms">Terms of Service</a> | 
+            <a href="http://localhost/php-graph-builder/public/#" data-modal="contact">Contact</a>
+        </p>
+    </footer>
+
+    <div class="modal-overlay" id="infoModal" aria-hidden="true">
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+            <div class="modal-header">
+                <h3 id="modalTitle">Information</h3>
+                <button class="modal-close" type="button" id="modalClose" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const body = document.body;
+            const themeToggle = document.getElementById('themeToggle');
+            const modal = document.getElementById('infoModal');
+            const modalClose = document.getElementById('modalClose');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalBody = document.getElementById('modalBody');
+
+            const modalContent = {
+                privacy: {
+                    title: 'Privacy Policy',
+                    body: 'CodeGraph processes uploaded code only for analysis and visual graph generation. Session-level data may be stored for your analysis history and can be removed from your database as needed.'
+                },
+                terms: {
+                    title: 'Terms of Service',
+                    body: 'This platform is provided for educational and research use. You are responsible for the code you submit and for reviewing findings before production usage.'
+                },
+                contact: {
+                    title: 'Contact',
+                    body: 'For project support, contact the system administrator or research supervisor associated with this deployment.'
+                }
+            };
+
+            function applyTheme(theme) {
+                body.setAttribute('data-theme', theme);
+                const icon = themeToggle ? themeToggle.querySelector('i') : null;
+                if (icon) {
+                    icon.className = theme === 'light' ? 'fas fa-sun' : 'fas fa-moon';
+                }
+                localStorage.setItem('landingTheme', theme);
+            }
+
+            const storedTheme = localStorage.getItem('landingTheme');
+            applyTheme(storedTheme === 'light' ? 'light' : 'dark');
+
+            if (themeToggle) {
+                themeToggle.addEventListener('click', function () {
+                    const current = body.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+                    applyTheme(current === 'light' ? 'dark' : 'light');
+                });
+            }
+
+            function openModal(kind) {
+                const data = modalContent[kind];
+                if (!data) return;
+                modalTitle.textContent = data.title;
+                modalBody.textContent = data.body;
+                modal.classList.add('active');
+                modal.setAttribute('aria-hidden', 'false');
+            }
+
+            function closeModal() {
+                modal.classList.remove('active');
+                modal.setAttribute('aria-hidden', 'true');
+            }
+
+            document.querySelectorAll('[data-modal]').forEach(function (link) {
+                link.addEventListener('click', function (event) {
+                    event.preventDefault();
+                    openModal(link.getAttribute('data-modal'));
+                });
+            });
+
+            modalClose.addEventListener('click', closeModal);
+            modal.addEventListener('click', function (event) {
+                if (event.target === modal) {
+                    closeModal();
+                }
+            });
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape' && modal.classList.contains('active')) {
+                    closeModal();
+                }
+            });
+        })();
+    </script>
+</body>
+</html>
