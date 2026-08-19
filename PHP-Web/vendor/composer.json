@@ -1,0 +1,6 @@
+cd php-graph-builder
+composer init --name="my/php-graph" \
+    --description="Joint Program Graph Builder for PHP Code Analysis" \
+    --type="project" \
+    --require="nikic/php-parser:^4.0" \
+    --no-interaction
